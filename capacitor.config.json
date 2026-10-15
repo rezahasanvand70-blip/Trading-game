@@ -1,0 +1,9 @@
+{
+  "appId": "com.rezahasanvand.tradinggame",
+  "appName": "Trading Game",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}
