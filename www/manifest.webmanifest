@@ -1,0 +1,16 @@
+{
+  "name": "شهر معامله‌گر",
+  "short_name": "شهر معامله‌گر",
+  "description": "چالش‌های معاملاتی مجازی و بازسازی خانه نئو",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fffdf8",
+  "theme_color": "#f6b84a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
