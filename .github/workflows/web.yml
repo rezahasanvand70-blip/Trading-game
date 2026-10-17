@@ -26,10 +26,10 @@ jobs:
           node --input-type=commonjs <<'NODE'
           const fs = require('fs');
           const html = fs.readFileSync('www/index.html', 'utf8');
-          const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
+          const scripts = html.split('<script>').slice(1).map(part => part.split('</script>')[0]);
           if (!scripts.length) throw new Error('No inline game script found');
-          for (const [index, match] of scripts.entries()) {
-            new Function(match[1]);
+          for (const [index, script] of scripts.entries()) {
+            new Function(script);
             console.log('Inline script ' + (index + 1) + ' syntax OK');
           }
           for (const file of ['www/manifest.webmanifest', 'www/sw.js', 'www/icon.svg']) {
