@@ -1,0 +1,64 @@
+name: Web Game
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate web game
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate game JavaScript
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('www/index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if (!scripts.length) throw new Error('No inline game script found');
+          for (const [index, match] of scripts.entries()) {
+            new Function(match[1]);
+            console.log('Inline script ' + (index + 1) + ' syntax OK');
+          }
+          for (const file of ['www/manifest.webmanifest', 'www/sw.js', 'www/icon.svg']) {
+            if (!fs.existsSync(file)) throw new Error('Missing web app file: ' + file);
+          }
+          JSON.parse(fs.readFileSync('www/manifest.webmanifest', 'utf8'));
+          console.log('PWA assets and manifest OK');
+          NODE
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare site
+        run: |
+          mkdir -p site
+          cp www/index.html www/manifest.webmanifest www/sw.js www/icon.svg site/
+          touch site/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    name: Deploy web game
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
