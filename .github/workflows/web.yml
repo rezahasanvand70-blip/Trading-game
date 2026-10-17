@@ -7,28 +7,26 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: web-validation
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Validate web game
+    name: Validate and package web game
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate game JavaScript
+      - name: Validate game JavaScript and PWA files
         run: |
           node --input-type=commonjs <<'NODE'
           const fs = require('fs');
           const html = fs.readFileSync('www/index.html', 'utf8');
-          const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
           if (!scripts.length) throw new Error('No inline game script found');
           for (const [index, match] of scripts.entries()) {
             new Function(match[1]);
@@ -40,27 +38,15 @@ jobs:
           JSON.parse(fs.readFileSync('www/manifest.webmanifest', 'utf8'));
           console.log('PWA assets and manifest OK');
           NODE
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Prepare site
+      - name: Prepare web package
         run: |
           mkdir -p site
           cp www/index.html www/manifest.webmanifest www/sw.js www/icon.svg site/
           touch site/.nojekyll
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload web package
+        uses: actions/upload-artifact@v4
         with:
+          name: trading-game-web
           path: site
-  deploy:
-    name: Deploy web game
-    needs: validate
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          if-no-files-found: error
+          retention-days: 30
